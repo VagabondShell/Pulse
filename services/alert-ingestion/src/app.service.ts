@@ -13,8 +13,6 @@ export class AppService {
     const url = 'http://localhost:8002/incidents'; // The address of your new service
 
     try {
-      // 2. Send the POST request
-      // We use firstValueFrom so we can "await" the result like a normal fetch
       const response = await firstValueFrom(
         this.httpService.post(url, dataLog),
       );

@@ -1,0 +1,43 @@
+
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model RawAlert {
+  id         String    @id @default(uuid())
+  service    String // The source of the alert (e.g., "Grafana", "Prometheus")
+  severity   String // "critical", "warning", "info"
+  message    String // The main description of the alert
+  labels     Json? // Flexible storage for extra metadata
+  status     String    @default("received") // "received", "processed", "ignored"
+  incidentId String? // Links to an incident if correlated
+  eventTime  DateTime  @default(now()) // When the alert actually happened
+  receivedAt DateTime  @default(now()) // When our service received it
+  incident   Incident? @relation(fields: [incidentId], references: [id])
+
+  @@map("raw_alerts") // Names the table "raw_alerts" in Postgres
+}
+
+model Incident {
+  id          String  @id @default(uuid())
+  title       String
+  description String?
+  status      String  @default("open") // open, investigating, resolved, closed
+  priority    String  @default("medium") // low, medium, high, critical
+  assigneeName String
+  // Stats and tracking
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt // Automatically updates on every save
+  // Relation: One incident has many alerts
+  alerts RawAlert[]
+  @@map("incidents")
+}
