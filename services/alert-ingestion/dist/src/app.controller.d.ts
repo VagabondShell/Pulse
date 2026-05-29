@@ -7,5 +7,15 @@ export declare class AppController {
         status: string;
         service: string;
     };
-    create(createAlertDto: CreateAlertDto): CreateAlertDto;
+    create(createAlertDto: CreateAlertDto): Promise<{
+        service: string;
+        message: string;
+        severity: string;
+        labels: import("@prisma/client/runtime/client").JsonValue | null;
+        id: string;
+        status: string;
+        incidentId: string | null;
+        eventTime: Date;
+        receivedAt: Date;
+    }>;
 }
