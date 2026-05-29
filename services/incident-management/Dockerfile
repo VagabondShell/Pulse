@@ -17,8 +17,8 @@ WORKDIR /usr/src/app
 ENV NODE_ENV=production
 
 # Copy package files to install production dependencies
-COPY package*.json ./
-COPY prisma ./prisma/
+COPY --chown=node:node  package*.json ./
+COPY --chown=node:node prisma ./prisma/
 
 # Install only production dependencies
 RUN npm ci --omit=dev
