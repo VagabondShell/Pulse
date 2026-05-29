@@ -10,3 +10,14 @@ export const fetchIncidentsFromBackend = async () => {
     return null;
   }
 };
+// Fetch a single incident by ID
+export const fetchIncidentById = async (id: string) => {
+  try {
+    const response = await fetch(`http://localhost:8002/incidents/${id}`);
+    if (!response.ok) throw new Error("Failed to fetch incident");
+    return await response.json();
+  } catch (error) {
+    console.error(`Error fetching incident ${id}:`, error);
+    return null;
+  }
+};
