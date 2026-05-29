@@ -11,49 +11,28 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppService = void 0;
 const common_1 = require("@nestjs/common");
-const prisma_service_1 = require("./prisma/prisma.service");
+const axios_1 = require("@nestjs/axios");
+const rxjs_1 = require("rxjs");
 let AppService = class AppService {
-    prisma;
-    constructor(prisma) {
-        this.prisma = prisma;
+    httpService;
+    constructor(httpService) {
+        this.httpService = httpService;
     }
-    async create(dataLog) {
-        const twoHoursAgo = new Date();
-        twoHoursAgo.setHours(twoHoursAgo.getHours() - 2);
-        const alert = await this.prisma.rawAlert.create({ data: dataLog });
-        const existingIncident = await this.prisma.incident.findFirst({
-            where: {
-                status: 'open',
-                title: { contains: dataLog.service, mode: 'insensitive' },
-                priority: dataLog.severity === 'critical'
-                    ? 'high'
-                    : dataLog.severity === 'low'
-                        ? 'low'
-                        : 'medium',
-                createdAt: { gte: twoHoursAgo },
-            },
-        });
-        if (existingIncident) {
-            return await this.prisma.rawAlert.update({
-                where: { id: alert.id },
-                data: { incidentId: existingIncident.id },
-            });
+    async ingestAlert(dataLog) {
+        const url = 'http://localhost:8002/incidents';
+        try {
+            const response = await (0, rxjs_1.firstValueFrom)(this.httpService.post(url, dataLog));
+            return response.data;
         }
-        else {
-            return await this.prisma.incident.create({
-                data: {
-                    title: `Issue in ${dataLog.service} (${dataLog.severity})`,
-                    priority: dataLog.severity === 'critical' ? 'high' : 'medium',
-                    status: 'open',
-                    alerts: { connect: { id: alert.id } },
-                },
-            });
+        catch (error) {
+            console.error('Failed to contact Incident Service:', error.message);
+            throw new common_1.InternalServerErrorException('Incident Management Service is unreachable');
         }
     }
 };
 exports.AppService = AppService;
 exports.AppService = AppService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [axios_1.HttpService])
 ], AppService);
 //# sourceMappingURL=app.service.js.map

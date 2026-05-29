@@ -12,6 +12,6 @@ export class AppController {
   }
   @Post('alerts')
   create(@Body() createAlertDto: CreateAlertDto) {
-    return this.appService.create(createAlertDto);
+    return this.appService.ingestAlert(createAlertDto);
   }
 }
