@@ -50,7 +50,6 @@ export class IncidentsService {
           title: `Issue in ${dataLog.service} (${dataLog.severity})`,
           priority: targetPriority, // Using the same mapped priority
           status: 'open',
-          assigneeName: 'Unassigned',
           alerts: {
             connect: { id: alert.id },
           },

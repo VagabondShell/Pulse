@@ -28,16 +28,21 @@ model RawAlert {
 }
 
 model Incident {
-  id          String  @id @default(uuid())
+  id          String   @id @default(uuid())
   title       String
   description String?
-  status      String  @default("open") // open, investigating, resolved, closed
-  priority    String  @default("medium") // low, medium, high, critical
-  assigneeName String
+  status      String   @default("open") // open, investigating, resolved, closed
+  priority    String   @default("medium") // low, medium, high, critical
+  
+  // THE FIX: Use an optional ID to reference the On-Call Service
+  assigneeId  String?  
+
   // Stats and tracking
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt // Automatically updates on every save
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt 
+
   // Relation: One incident has many alerts
-  alerts RawAlert[]
+  alerts      RawAlert[]
+  
   @@map("incidents")
 }
