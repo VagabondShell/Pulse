@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
+import { Prisma } from '@prisma/client';
+
+type SlotWithEngineer = Prisma.ScheduleSlotGetPayload<{
+  include: { engineer: true };
+}>;
 
 @Injectable()
 export class OnCallCalculatorService {
@@ -91,7 +96,10 @@ export class OnCallCalculatorService {
   }
 
   // 👇 FIXED: Calculate dynamically based on actual slots
-  private calculateCurrentWeek(startDate: Date, slots: any[]): number {
+  private calculateCurrentWeek(
+    startDate: Date,
+    slots: SlotWithEngineer[],
+  ): number {
     // Get unique week numbers from slots (only primary for rotation length)
     const uniqueWeeks = this.getUniqueWeekNumbers(slots, 'primary');
 
@@ -119,24 +127,29 @@ export class OnCallCalculatorService {
   }
 
   // Helper: Get unique week numbers for a specific role
-  private getUniqueWeekNumbers(slots: any[], role?: string): number[] {
+  private getUniqueWeekNumbers(
+    slots: SlotWithEngineer[],
+    role?: string,
+  ): number[] {
     const filteredSlots = role
       ? slots.filter((slot) => slot.role === role)
       : slots;
 
-    const weekNumbers = filteredSlots.map((slot) => slot.weekNumber);
+    const weekNumbers = filteredSlots
+      .map((slot) => slot.weekNumber)
+      .filter((wn): wn is number => wn !== null);
     const uniqueWeeks = [...new Set(weekNumbers)].sort((a, b) => a - b);
 
     return uniqueWeeks;
   }
 
   // Helper: Get total rotation length
-  private getTotalWeeksInRotation(slots: any[]): number {
+  private getTotalWeeksInRotation(slots: SlotWithEngineer[]): number {
     return this.getUniqueWeekNumbers(slots, 'primary').length;
   }
 
   // Helper: Get all available weeks (for error messages)
-  private getAvailableWeeks(slots: any[]): number[] {
+  private getAvailableWeeks(slots: SlotWithEngineer[]): number[] {
     return this.getUniqueWeekNumbers(slots, 'primary');
   }
   //

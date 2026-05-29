@@ -2,9 +2,31 @@ import { useState, useEffect } from 'react';
 import { fetchOnCallScheduleByService } from '../api/incidentApi';
 import { Link } from 'react-router-dom';
 
+interface RotationSlot {
+  weekNumber: number;
+  role: 'primary' | 'secondary';
+  engineerName: string;
+  engineerEmail: string;
+}
+
+interface ScheduleData {
+  teamName: string;
+  currentWeek: number;
+  upcomingRotation: RotationSlot[];
+}
+
+interface GroupedRotationSlot {
+  weekNumber: number;
+  primary: string;
+  primaryEmail: string;
+  secondary: string;
+  secondaryEmail: string;
+  [key: string]: string | number;
+}
+
 export default function OnCallSchedule() {
   const [selectedService, setSelectedService] = useState('frontend-api');
-  const [scheduleData, setScheduleData] = useState<any>(null);
+  const [scheduleData, setScheduleData] = useState<ScheduleData | null>(null);
 
   useEffect(() => {
     const loadSchedule = async () => {
@@ -15,7 +37,7 @@ export default function OnCallSchedule() {
   }, [selectedService]);
 
   const groupedRotation = scheduleData?.upcomingRotation 
-    ? scheduleData.upcomingRotation.reduce((acc: any, slot: any) => {
+    ? scheduleData.upcomingRotation.reduce((acc: Record<number, GroupedRotationSlot>, slot: RotationSlot) => {
         if (!acc[slot.weekNumber]) {
           acc[slot.weekNumber] = { 
             weekNumber: slot.weekNumber, 
@@ -34,7 +56,7 @@ export default function OnCallSchedule() {
   const rotationRows = Object.values(groupedRotation);
   
   // 👇 THIS IS THE MAGIC LINE THAT PREVENTS THE CRASH! 👇
-  const currentHeroes: any = scheduleData ? groupedRotation[scheduleData.currentWeek] : null;
+  const currentHeroes = scheduleData ? groupedRotation[scheduleData.currentWeek] : null;
 
   return (
     <div className="details-container" style={{ padding: '2rem 4rem', backgroundColor: '#0d1117', color: '#c9d1d9', minHeight: '100vh' }}>
@@ -107,7 +129,7 @@ export default function OnCallSchedule() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rotationRows.map((row: any) => (
+                  {rotationRows.map((row: GroupedRotationSlot) => (
                     <tr key={row.weekNumber} style={{ borderBottom: '1px solid #30363d', backgroundColor: scheduleData.currentWeek === row.weekNumber ? 'rgba(50, 215, 75, 0.05)' : 'transparent' }}>
                       <td style={{ padding: '1rem' }}>
                         Week {row.weekNumber}

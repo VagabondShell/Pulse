@@ -100,7 +100,9 @@ export default function Dashboard() {
               let timeAgo = 'Unknown';
               try { 
                 timeAgo = formatDistanceToNow(new Date(incident.createdAt), { addSuffix: true }); 
-              } catch (e) {}
+              } catch {
+                // Ignore parsing errors for invalid dates
+              }
 
               return (
                 <tr key={incident.id}>

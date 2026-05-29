@@ -7,4 +7,7 @@ async function bootstrap() {
   app.enableCors();
   await app.listen(8003, '0.0.0.0');
 }
-bootstrap();
+bootstrap().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
