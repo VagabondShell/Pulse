@@ -1,0 +1,77 @@
+.dashboard-container {
+  padding: 1.5rem 2rem;
+  background-color: #0f0f11; /* Slightly darker, sleeker black */
+  color: #e0e0e0;
+  min-height: 100vh;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+}
+
+/* 1. Sleek, Modern Title Area */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #222;
+}
+
+.dashboard-title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-subtitle {
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: 4px;
+}
+
+/* 2. Tightening up the Table */
+.table-container {
+  background-color: #161618;
+  border-radius: 6px;
+  border: 1px solid #2a2a2a;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  overflow: hidden; /* Keeps the rounded corners crisp */
+}
+
+.incident-table {
+  width: 100%;
+  text-align: left;
+  border-collapse: collapse;
+  font-size: 0.9rem; /* Smaller text makes it feel less zoomed */
+}
+
+.incident-table th {
+  padding: 0.75rem 1rem;
+  background-color: #1a1a1c;
+  color: #888;
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.incident-table td {
+  padding: 0.75rem 1rem; /* Much tighter padding! */
+  border-bottom: 1px solid #222;
+  color: #ccc;
+}
+
+.incident-table tr:hover {
+  background-color: #1c1c1f; /* Nice highlight when mouse hovers */
+}
+
+.incident-id {
+  font-family: monospace;
+}
