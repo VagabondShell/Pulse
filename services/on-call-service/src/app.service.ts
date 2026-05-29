@@ -139,4 +139,55 @@ export class OnCallCalculatorService {
   private getAvailableWeeks(slots: any[]): number[] {
     return this.getUniqueWeekNumbers(slots, 'primary');
   }
+  //
+  // 1. The Front Door for the UI
+  async getFullRotationForService(serviceName: string) {
+    const service = await this.prisma.service.findUnique({
+      where: { name: serviceName },
+      include: { team: true },
+    });
+
+    if (!service) {
+      throw new Error(`Service '${serviceName}' not found`);
+    }
+
+    return this.getFullScheduleForTeam(service.teamId);
+  }
+
+  // 2. The Heavy Math for the UI
+  async getFullScheduleForTeam(teamId: string) {
+    const schedule = await this.prisma.schedule.findFirst({
+      where: { teamId: teamId, isActive: true },
+      include: {
+        slots: {
+          include: { engineer: true },
+          orderBy: { weekNumber: 'asc' }, // Ensure the table is in chronological order!
+        },
+        team: true,
+      },
+    });
+
+    if (!schedule) throw new Error(`No schedule found`);
+
+    // Figure out what week it is right now
+    const currentWeek = this.calculateCurrentWeek(
+      schedule.startDate,
+      schedule.slots,
+    );
+
+    // 👇 Map the entire schedule into a clean array for React!
+    const rotationPattern = schedule.slots.map((slot) => ({
+      weekNumber: slot.weekNumber,
+      role: slot.role,
+      engineerName: slot.engineer.name,
+      engineerEmail: slot.engineer.email,
+    }));
+
+    // Return the payload specifically designed for the UI
+    return {
+      teamName: schedule.team.name,
+      currentWeek: currentWeek,
+      upcomingRotation: rotationPattern, // React will .map() over this array to draw the table!
+    };
+  }
 }

@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// 1. We wrap it in a function and EXPORT it so other files can see it
 export const fetchIncidentsFromBackend = async () => {
   try {
     const response = await axios.get("http://localhost:8002/incidents");
@@ -33,4 +32,18 @@ export const resolveIncidentApi = async (id: string) => {
     `http://localhost:8002/incidents/${id}/resolve`,
   );
   return response.data;
+};
+
+export const fetchOnCallScheduleByService = async (serviceName: string) => {
+  try {
+    console.log("here");
+    const ON_CALL_API_URL = "http://localhost:8003/api/v1/on-call";
+    const response = await axios.get(
+      `${ON_CALL_API_URL}/schedule?service=${serviceName}`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error("API Error:", error);
+    return null;
+  }
 };

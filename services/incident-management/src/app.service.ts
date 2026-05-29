@@ -3,6 +3,7 @@ import { PrismaService } from './prisma/prisma.service';
 import { ProcessAlertDto } from './dto/process-alert.dto';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs'; // Helper to convert Observable to Promise
+import { NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class IncidentsService {
@@ -61,6 +62,7 @@ export class IncidentsService {
           alerts: {
             connect: { id: alert.id },
           },
+          description: dataLog.message,
         },
       });
       try {
@@ -73,7 +75,6 @@ export class IncidentsService {
           ),
         );
         const onCallEngineer = response.data;
-        console.log('RECEIVED FROM 8003:', onCallEngineer);
         incident = await this.prisma.incident.update({
           where: { id: incident.id },
           data: {
@@ -95,13 +96,17 @@ export class IncidentsService {
     }
   }
   async getIncidents(statusFilter?: string) {
+    let whereClause: any = {};
+
+    if (statusFilter) {
+      whereClause = { status: statusFilter };
+    } else {
+      whereClause = { status: { not: 'resolved' } };
+    }
+
     const incidents = await this.prisma.incident.findMany({
-      where: {
-        ...(statusFilter && { status: statusFilter }),
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      where: whereClause,
+      orderBy: { createdAt: 'desc' },
     });
 
     return incidents.map((incident) => ({
@@ -113,5 +118,54 @@ export class IncidentsService {
       assigneeName: incident.assigneeName || 'Unassigned',
     }));
   }
-  async getIncident(id: string);
+  async getIncident(id: string) {
+    const incident = await this.prisma.incident.findUnique({
+      where: { id: id },
+      include: {
+        alerts: true,
+      },
+    });
+    if (!incident) {
+      throw new NotFoundException(`Incident with ID ${id} not found`);
+    }
+    const isAcked = incident.acknowledgedAt !== null;
+    const isRes = incident.resolvedAt !== null;
+
+    return {
+      id: incident.id,
+      service: incident.service,
+      severity: incident.priority.toUpperCase(),
+      status: incident.status.toUpperCase(),
+      assigneeName: incident.assigneeName || 'Unassigned',
+      description: incident.description || 'No description',
+
+      // 👇 Exactly one set of timestamps!
+      createdAt: incident.createdAt.toISOString(),
+      acknowledgedAt: incident.acknowledgedAt?.toISOString() || null,
+      resolvedAt: incident.resolvedAt?.toISOString() || null,
+
+      // 👇 The Booleans
+      isAcknowledged: isAcked,
+      isResolved: isRes,
+    };
+  }
+  // 👇 Add this to the bottom of IncidentsService
+  async acknowledgeIncident(id: string) {
+    return this.prisma.incident.update({
+      where: { id },
+      data: {
+        status: 'acknowledged',
+        acknowledgedAt: new Date(), // Sets the exact time!
+      },
+    });
+  }
+  async resolveIncident(id: string) {
+    return this.prisma.incident.update({
+      where: { id },
+      data: {
+        status: 'resolved',
+        resolvedAt: new Date(), // Sets the exact time!
+      },
+    });
+  }
 }

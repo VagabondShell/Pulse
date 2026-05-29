@@ -43,6 +43,8 @@ model Incident {
   // Stats and tracking
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt 
+  acknowledgedAt DateTime? // Optional (?) because it starts as null
+  resolvedAt     DateTime?
 
   // Relation: One incident has many alerts
   alerts      RawAlert[]

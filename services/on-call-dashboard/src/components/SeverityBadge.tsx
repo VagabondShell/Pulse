@@ -4,12 +4,13 @@ interface SeverityBadgeProps {
 
 export default function SeverityBadge({ severity }: SeverityBadgeProps) {
   const getSeverityColor = (sev: string) => {
-    if (sev === 'CRITICAL') return '#ff4444'; 
-    if (sev === 'HIGH') return '#ff8800'; 
-    if (sev === 'MED') return '#ffcc00'; 
+    // 1. Normalize the string so 'Medium', 'medium', and 'MEDIUM' all work
+    const normalizedSev = sev?.toUpperCase(); 
+    if (normalizedSev === 'CRITICAL') return '#ff4444'; 
+    if (normalizedSev === 'HIGH') return '#ff4444'; // Adjusted to match your new red HIGH counters!
+    if (normalizedSev === 'MEDIUM' || normalizedSev === 'MED') return '#ff9f0a'; 
     return '#00C851'; 
   };
-
   return (
     <span style={{ 
       backgroundColor: getSeverityColor(severity), 
@@ -19,7 +20,8 @@ export default function SeverityBadge({ severity }: SeverityBadgeProps) {
       fontSize: '0.85rem',
       fontWeight: 'bold'
     }}>
-      {severity}
+      {/* 3. Make sure the text on the badge is also uppercase! */}
+      {severity?.toUpperCase()}
     </span>
   );
 }

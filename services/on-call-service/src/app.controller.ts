@@ -7,7 +7,7 @@ export class AppController {
     private readonly onCallCalculatorService: OnCallCalculatorService,
   ) {}
 
-  @Get('current') // The specific endpoint
+  @Get('current')
   async getCurrentOnCall(@Query('service') serviceName: string) {
     if (!serviceName) {
       throw new BadRequestException('You must provide a ?service= parameter');
@@ -15,5 +15,11 @@ export class AppController {
     return await this.onCallCalculatorService.getCurrentOnCallForService(
       serviceName,
     );
+  }
+
+  @Get('schedule')
+  async getFullSchedule(@Query('service') serviceName: string) {
+    // Returns the entire array of slots for the next 4 weeks (For React Frontend)
+    return this.onCallCalculatorService.getFullRotationForService(serviceName);
   }
 }

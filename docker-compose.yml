@@ -1,3 +1,6 @@
+networks:
+  pulse:
+    name: pulse
 services:
   database:
     image: postgres:17.9-alpine
@@ -8,5 +11,21 @@ services:
       - .env
     volumes:
       - db-data:/var/lib/postgresql/data
+    networks:
+          - pulse
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+        - pulse
 volumes:
   db-data:
+  grafana_data:
