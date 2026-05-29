@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class AppService {
-  getHello(): string {
-    return 'Hello World!';
-  }
+  getOnCallEngineer(): {
+    //here the logic to get the current engenner to solve this issue
+  };
 }
