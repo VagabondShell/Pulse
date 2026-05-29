@@ -1,21 +1,31 @@
-import { Injectable } from '@nestjs/common';
+// src/app.service.ts
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs'; // Helper to convert Observable to Promise
 import { CreateAlertDto } from './dto/create-alert.dto';
-import { PrismaService } from './prisma/prisma.service'; // Adjust path if needed
 
 @Injectable()
 export class AppService {
-  constructor(private prisma: PrismaService) {}
+  // 1. Inject the service
+  constructor(private readonly httpService: HttpService) {}
 
-  async create(dataLog: CreateAlertDto) {
-    // We use await because database operations are asynchronous
-    const newAlert = await this.prisma.rawAlert.create({
-      data: {
-        service: dataLog.service,
-        severity: dataLog.severity,
-        message: dataLog.message,
-        labels: dataLog.labels || {},
-      },
-    });
-    return newAlert;
+  async ingestAlert(dataLog: CreateAlertDto) {
+    const url = 'http://localhost:8002/incidents'; // The address of your new service
+
+    try {
+      // 2. Send the POST request
+      // We use firstValueFrom so we can "await" the result like a normal fetch
+      const response = await firstValueFrom(
+        this.httpService.post(url, dataLog),
+      );
+
+      // 3. Return the data the Incident Service sends back
+      return response.data;
+    } catch (error) {
+      console.error('Failed to contact Incident Service:', error.message);
+      throw new InternalServerErrorException(
+        'Incident Management Service is unreachable',
+      );
+    }
   }
 }

@@ -18,15 +18,37 @@ let AppService = class AppService {
         this.prisma = prisma;
     }
     async create(dataLog) {
-        const newAlert = await this.prisma.rawAlert.create({
-            data: {
-                service: dataLog.service,
-                severity: dataLog.severity,
-                message: dataLog.message,
-                labels: dataLog.labels || {},
+        const twoHoursAgo = new Date();
+        twoHoursAgo.setHours(twoHoursAgo.getHours() - 2);
+        const alert = await this.prisma.rawAlert.create({ data: dataLog });
+        const existingIncident = await this.prisma.incident.findFirst({
+            where: {
+                status: 'open',
+                title: { contains: dataLog.service, mode: 'insensitive' },
+                priority: dataLog.severity === 'critical'
+                    ? 'high'
+                    : dataLog.severity === 'low'
+                        ? 'low'
+                        : 'medium',
+                createdAt: { gte: twoHoursAgo },
             },
         });
-        return newAlert;
+        if (existingIncident) {
+            return await this.prisma.rawAlert.update({
+                where: { id: alert.id },
+                data: { incidentId: existingIncident.id },
+            });
+        }
+        else {
+            return await this.prisma.incident.create({
+                data: {
+                    title: `Issue in ${dataLog.service} (${dataLog.severity})`,
+                    priority: dataLog.severity === 'critical' ? 'high' : 'medium',
+                    status: 'open',
+                    alerts: { connect: { id: alert.id } },
+                },
+            });
+        }
     }
 };
 exports.AppService = AppService;
