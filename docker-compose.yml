@@ -38,6 +38,26 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - pulse
+
+  alert-ingestion:
+    build: ./services/alert-ingestion
+    container_name: alert-ingestion
+    ports:
+      - "8001:8001"
+    networks:
+      - pulse
+    depends_on:
+      - database
+
+  incident-management :
+    build: ./services/incident-management
+    container_name: incident-management
+    networks:
+      - pulse
+    depends_on:
+      - database
+      - alert-ingestion
+
 volumes:
   db-data:
   grafana_data:

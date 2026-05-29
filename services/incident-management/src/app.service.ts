@@ -71,7 +71,7 @@ export class IncidentsService {
         );
         const response = await firstValueFrom(
           this.httpService.get(
-            `http://localhost:8003/api/v1/on-call/current?service=${dataLog.service}`,
+            `http://on-call-service:8003/api/v1/on-call/current?service=${dataLog.service}`,
           ),
         );
         const onCallEngineer = response.data;
