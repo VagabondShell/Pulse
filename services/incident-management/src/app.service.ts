@@ -12,8 +12,8 @@ export class IncidentsService {
     info: 'low',
   };
   async processAlert(dataLog: ProcessAlertDto) {
-    const twoHoursAgo = new Date();
-    twoHoursAgo.setHours(twoHoursAgo.getHours() - 2);
+    const fiveMinutesAgo = new Date();
+    fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
     // 1. Determine the internal priority once
     const targetPriority =
       this.severityToPriority[dataLog.severity] || 'medium';
@@ -34,7 +34,7 @@ export class IncidentsService {
         // Searching for the service name in the title
         title: { contains: dataLog.service, mode: 'insensitive' },
         priority: targetPriority, // Using our mapped priority
-        createdAt: { gte: twoHoursAgo },
+        createdAt: { gte: fiveMinutesAgo },
       },
     });
 
@@ -45,7 +45,6 @@ export class IncidentsService {
         data: { incidentId: existingIncident.id },
       });
     } else {
-      // 4b. If NOT found: Create a new incident and link the alert
       return await this.prisma.incident.create({
         data: {
           title: `Issue in ${dataLog.service} (${dataLog.severity})`,
