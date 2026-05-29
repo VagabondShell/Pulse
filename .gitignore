@@ -2,3 +2,8 @@ node_modules/
 dist/
 .env
 .DS_Store
+.env.*
+dist/
+build/
+.DS_Store
+Thumbs.db
