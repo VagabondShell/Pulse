@@ -73,13 +73,13 @@ export class IncidentsService {
           ),
         );
         const onCallEngineer = response.data;
-        // Update the incident with the Snapshot Data
+        console.log('RECEIVED FROM 8003:', onCallEngineer);
         incident = await this.prisma.incident.update({
           where: { id: incident.id },
           data: {
-            assigneeId: onCallEngineer.assigneeId,
-            assigneeName: onCallEngineer.name,
-            assigneeEmail: onCallEngineer.email,
+            assigneeId: onCallEngineer.primary?.id,
+            assigneeName: onCallEngineer.primary?.name,
+            assigneeEmail: onCallEngineer.primary?.email,
           },
         });
         this.logger.log(
@@ -87,12 +87,30 @@ export class IncidentsService {
         );
         return incident;
       } catch (error) {
-        // If port 8003 is down, we don't crash. We just log the error.
         this.logger.error(
           `❌ Failed to assign engineer to incident: ${error.message}`,
         );
         return incident;
       }
     }
+  }
+  async getIncidents(statusFilter?: string) {
+    const incidents = await this.prisma.incident.findMany({
+      where: {
+        ...(statusFilter && { status: statusFilter }),
+      },
+      orderBy: {
+        createdAt: 'desc', // Newest alerts at the top!
+      },
+    });
+
+    return incidents.map((incident) => ({
+      id: incident.id,
+      service: incident.service,
+      severity: incident.priority.toUpperCase(),
+      status: incident.status.toUpperCase(),
+      createdAt: incident.createdAt.toISOString(),
+      assigneeName: incident.assigneeName || 'Unassigned',
+    }));
   }
 }
