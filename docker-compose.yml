@@ -46,8 +46,6 @@ services:
   alert-ingestion:
     build: ./services/alert-ingestion
     container_name: alert-ingestion
-    env_file:
-      - ./services/alert-ingestion/.env
     ports:
       - "8001:8001"
     networks:
@@ -61,8 +59,6 @@ services:
     container_name: incident-management
     env_file:
       - ./services/incident-management/.env
-    ports:
-      - "8002:8002"
     networks:
       - pulse
     depends_on:
@@ -76,8 +72,6 @@ services:
     container_name: on-call-service
     env_file:
       - ./services/on-call-service/.env
-    ports:
-      - "8003:8003"
     networks:
       - pulse
     depends_on:
