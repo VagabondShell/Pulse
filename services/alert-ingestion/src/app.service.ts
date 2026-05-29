@@ -10,7 +10,7 @@ export class AppService {
   constructor(private readonly httpService: HttpService) {}
 
   async ingestAlert(dataLog: CreateAlertDto) {
-    const url = 'http://localhost:8002/incidents'; // The address of your new service
+    const url = 'http://incident-management:8002/incidents'; // The address of your new service
 
     try {
       const response = await firstValueFrom(
