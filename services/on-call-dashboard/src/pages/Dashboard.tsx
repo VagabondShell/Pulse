@@ -1,17 +1,23 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchIncidentsFromBackend } from '../api/incidentApi'; 
+import { fetchIncidentsFromBackend } from '../api/incidentApi';
 import { formatDistanceToNow } from 'date-fns';
 import SeverityBadge from '../components/SeverityBadge'; 
 import './Dashboard.css'; 
 
+// Inside Dashboard.tsx
 export interface Incident {
   id: string;
   service: string;
   severity: string;
   status: string;
-  assigneeName: string | null;
+  assigneeName: string;
+  description: string;
   createdAt: string;
+  acknowledgedAt: string | null;
+  resolvedAt: string | null;
+  isAcknowledged: boolean;
+  isResolved: boolean;
 }
 
 export default function Dashboard() {
@@ -39,7 +45,7 @@ export default function Dashboard() {
         acc[sev] = 1;
       }
       return acc;
-    }, { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 } as Record<string, number>);
+    }, { HIGH: 0, MEDIUM: 0, LOW: 0 } as Record<string, number>);
   }, [incidents]);
 
   // 4. RENDER (Drawing the UI)
@@ -60,11 +66,6 @@ export default function Dashboard() {
 
       {/* Tighter, Smaller Counters */}
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div style={{ padding: '0.75rem 1rem', backgroundColor: 'rgba(255, 68, 68, 0.05)', border: '1px solid rgba(255, 68, 68, 0.2)', borderRadius: '6px', minWidth: '100px' }}>
-          <div style={{ fontSize: '0.75rem', color: '#ff4444', fontWeight: 'bold' }}>CRITICAL</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fff', marginTop: '2px' }}>{severityCounts.CRITICAL}</div>
-        </div>
-        
         <div style={{ padding: '0.75rem 1rem', backgroundColor: 'rgba(255, 136, 0, 0.05)', border: '1px solid rgba(255, 136, 0, 0.2)', borderRadius: '6px', minWidth: '100px' }}>
           <div style={{ fontSize: '0.75rem', color: '#ff8800', fontWeight: 'bold' }}>HIGH</div>
           <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fff', marginTop: '2px' }}>{severityCounts.HIGH}</div>

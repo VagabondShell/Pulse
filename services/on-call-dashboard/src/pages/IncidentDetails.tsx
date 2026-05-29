@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { fetchIncidentById } from '../api/incidentApi';
+import { fetchIncidentById, acknowledgeIncidentApi, resolveIncidentApi } from '../api/incidentApi';
 import type { Incident } from './Dashboard'; 
 import './IncidentDetails.css'; 
 
@@ -35,7 +35,31 @@ export default function IncidentDetails() {
     };
     loadIncident();
   }, [id]); 
+  //
+// 👇 ADD THESE TWO FUNCTIONS 👇
+  const handleAcknowledge = async () => {
+    if (!incident) return;
+    try {
+      await acknowledgeIncidentApi(incident.id);
+      // Re-fetch to instantly update the UI with the new timestamps!
+      const updatedData = await fetchIncidentById(incident.id);
+      setIncident(updatedData);
+    } catch (error) {
+      console.error("Failed to acknowledge:", error);
+    }
+  };
 
+  const handleResolve = async () => {
+    if (!incident) return;
+    try {
+      await resolveIncidentApi(incident.id);
+      const updatedData = await fetchIncidentById(incident.id);
+      setIncident(updatedData);
+    } catch (error) {
+      console.error("Failed to resolve:", error);
+    }
+  };
+  // 👆 ---------------------- 👆
   if (loading) return <div className="details-container">Loading Incident {id}...</div>;
   if (!incident) return <div className="details-container">Incident not found!</div>;
 
@@ -97,18 +121,23 @@ export default function IncidentDetails() {
 
         {/* BOTTOM SECTION: Actions & Metrics */}
         <div className="actions-section">
-          <div className="button-group">
-            <button 
-              className="btn btn-ack"
-              disabled={incident.status === 'ACKNOWLEDGED'}
-            >
-              {incident.status === 'ACKNOWLEDGED' ? '✓ ACKNOWLEDGED' : 'ACKNOWLEDGE'}
-            </button>
-            <button className="btn btn-resolve">
-              RESOLVE INCIDENT
+        <div className="button-group">
+        <button 
+        className="btn btn-ack"
+        disabled={incident.isAcknowledged} 
+        onClick={handleAcknowledge} /* 👈 THIS IS THE MAGIC TRIGGER! */
+        >
+        {incident.isAcknowledged ? '✓ ACKNOWLEDGED' : 'ACKNOWLEDGE'}
+        </button>
+
+        <button 
+        className="btn btn-resolve"
+        disabled={incident.isResolved}
+        onClick={handleResolve}     /* 👈 THIS IS THE MAGIC TRIGGER! */
+        >
+        {incident.isResolved ? '✓ RESOLVED' : 'RESOLVE INCIDENT'}
             </button>
           </div>
-
           {/* Metrics pushed to the right side */}
           <div style={{ textAlign: 'right' }}>
             <div className="stat-block" style={{ flexDirection: 'row', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
