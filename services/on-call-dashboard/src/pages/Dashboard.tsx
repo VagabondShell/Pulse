@@ -61,22 +61,25 @@ export default function Dashboard() {
             <span style={{ color: '#ff4444' }}>●</span> Active Incidents
           </h1>
           <div className="dashboard-subtitle">Real-time system monitoring</div>
-        </div>
-      </div>
+          </div>
+          </div>
 
-      {/* Tighter, Smaller Counters */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div style={{ padding: '0.75rem 1rem', backgroundColor: 'rgba(255, 136, 0, 0.05)', border: '1px solid rgba(255, 136, 0, 0.2)', borderRadius: '6px', minWidth: '100px' }}>
-          <div style={{ fontSize: '0.75rem', color: '#ff8800', fontWeight: 'bold' }}>HIGH</div>
+          {/* Tighter, Smaller Counters */}
+          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+
+          {/* HIGH Counter - Urgent Red */}
+          <div style={{ padding: '0.75rem 1rem', backgroundColor: 'rgba(255, 68, 68, 0.1)', border: '1px solid rgba(255, 68, 68, 0.4)', borderRadius: '6px', minWidth: '100px' }}>
+          <div style={{ fontSize: '0.75rem', color: '#ff4444', fontWeight: 'bold', letterSpacing: '1px' }}>HIGH</div>
           <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fff', marginTop: '2px' }}>{severityCounts.HIGH}</div>
-        </div>
-        
-        <div style={{ padding: '0.75rem 1rem', backgroundColor: 'rgba(255, 204, 0, 0.05)', border: '1px solid rgba(255, 204, 0, 0.2)', borderRadius: '6px', minWidth: '100px' }}>
-          <div style={{ fontSize: '0.75rem', color: '#ffcc00', fontWeight: 'bold' }}>MED</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fff', marginTop: '2px' }}>{severityCounts.MEDIUM}</div>
-        </div>
-      </div>
+          </div>
 
+          {/* MED Counter - Warning Orange/Yellow */}
+          <div style={{ padding: '0.75rem 1rem', backgroundColor: 'rgba(255, 159, 10, 0.1)', border: '1px solid rgba(255, 159, 10, 0.4)', borderRadius: '6px', minWidth: '100px' }}>
+          <div style={{ fontSize: '0.75rem', color: '#ff9f0a', fontWeight: 'bold', letterSpacing: '1px' }}>MED</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fff', marginTop: '2px' }}>{severityCounts.MEDIUM}</div>
+          </div>
+
+      </div>
       {/* The Incident Table */}
       <div className="table-container">
         <table className="incident-table">
