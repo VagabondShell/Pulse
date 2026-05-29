@@ -39,7 +39,7 @@ export default function Dashboard() {
         acc[sev] = 1;
       }
       return acc;
-    }, { CRITICAL: 0, HIGH: 0, MED: 0, LOW: 0 } as Record<string, number>);
+    }, { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 } as Record<string, number>);
   }, [incidents]);
 
   // 4. RENDER (Drawing the UI)
@@ -72,7 +72,7 @@ export default function Dashboard() {
         
         <div style={{ padding: '0.75rem 1rem', backgroundColor: 'rgba(255, 204, 0, 0.05)', border: '1px solid rgba(255, 204, 0, 0.2)', borderRadius: '6px', minWidth: '100px' }}>
           <div style={{ fontSize: '0.75rem', color: '#ffcc00', fontWeight: 'bold' }}>MED</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fff', marginTop: '2px' }}>{severityCounts.MED}</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fff', marginTop: '2px' }}>{severityCounts.MEDIUM}</div>
         </div>
       </div>
 
