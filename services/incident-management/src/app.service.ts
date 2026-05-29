@@ -4,6 +4,17 @@ import { ProcessAlertDto } from './dto/process-alert.dto';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs'; // Helper to convert Observable to Promise
 import { NotFoundException } from '@nestjs/common';
+import { AxiosResponse } from 'axios';
+import { Prisma } from '@prisma/client';
+
+interface OnCallResponse {
+  primary?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  name?: string;
+}
 
 @Injectable()
 export class IncidentsService {
@@ -32,7 +43,7 @@ export class IncidentsService {
         service: dataLog.service,
         severity: dataLog.severity,
         message: dataLog.message,
-        labels: dataLog.labels || {},
+        labels: (dataLog.labels as Prisma.InputJsonValue) || {},
       },
     });
 
@@ -69,8 +80,8 @@ export class IncidentsService {
         this.logger.log(
           `📞 Calling On-Call Service for team: ${dataLog.service}...`,
         );
-        const response = await firstValueFrom(
-          this.httpService.get(
+        const response: AxiosResponse<OnCallResponse> = await firstValueFrom(
+          this.httpService.get<OnCallResponse>(
             `http://on-call-service:8003/api/v1/on-call/current?service=${dataLog.service}`,
           ),
         );
@@ -84,25 +95,23 @@ export class IncidentsService {
           },
         });
         this.logger.log(
-          `✅ Successfully assigned Incident to: ${onCallEngineer.name}`,
+          `✅ Successfully assigned Incident to: ${onCallEngineer.name ?? 'Unknown'}`,
         );
         return incident;
-      } catch (error) {
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         this.logger.error(
-          `❌ Failed to assign engineer to incident: ${error.message}`,
+          `❌ Failed to assign engineer to incident: ${errorMessage}`,
         );
         return incident;
       }
     }
   }
   async getIncidents(statusFilter?: string) {
-    let whereClause: any = {};
-
-    if (statusFilter) {
-      whereClause = { status: statusFilter };
-    } else {
-      whereClause = { status: { not: 'resolved' } };
-    }
+    const whereClause: Prisma.IncidentWhereInput = statusFilter
+      ? { status: statusFilter }
+      : { status: { not: 'resolved' } };
 
     const incidents = await this.prisma.incident.findMany({
       where: whereClause,
