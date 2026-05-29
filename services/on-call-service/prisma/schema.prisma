@@ -1,7 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// Updated schema.prisma
 
 generator client {
   provider = "prisma-client-js"
@@ -11,17 +8,117 @@ datasource db {
   provider = "postgresql"
 }
 
+// prisma/schema.prisma for on-call service
+
 model Team {
-  id          String     @id @default(uuid())
-  name        String     @unique // e.g., "payment-api"
+  id          String   @id @default(uuid())
+  name        String   @unique // "Platform Engineering"
   description String?
-  engineers   Engineer[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  schedules   Schedule[]
+  engineers   TeamMember[]
+  services  Service[]
+  
+  @@map("teams")
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  name        String   @unique  // "frontend-api", "payment-service", etc.
+  description String?
+  teamId      String
+  createdAt   DateTime @default(now())
+  
+  team Team @relation(fields: [teamId], references: [id])
+  
+  @@map("services")
 }
 
 model Engineer {
-  id       String @id @default(uuid())
-  name     String
-  email    String @unique
-  teamId   String
-  team     Team   @relation(fields: [teamId], references: [id])
+  id              String   @id @default(uuid())
+  name            String
+  email           String   @unique
+  phone           String?
+  notificationPreferences Json? // { email: true, sms: false, etc }
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  teamMemberships TeamMember[]
+  scheduleSlots   ScheduleSlot[]
+  
+  @@map("engineers")
+}
+
+model TeamMember {
+  id         String   @id @default(uuid())
+  teamId     String
+  engineerId String
+  role       String   @default("member") // "member", "lead", "manager"
+  joinedAt   DateTime @default(now())
+  
+  team     Team     @relation(fields: [teamId], references: [id])
+  engineer Engineer @relation(fields: [engineerId], references: [id])
+  
+  @@unique([teamId, engineerId])
+  @@map("team_members")
+}
+
+model Schedule {
+  id          String   @id @default(uuid())
+  teamId      String
+  name        String   // "Weekly Rotation - Q1 2026"
+  type        String   // "weekly", "daily", "custom"
+  startDate   DateTime
+  endDate     DateTime?
+  isActive    Boolean  @default(true)
+  timezone    String   @default("UTC")
+  
+  // Escalation policy
+  escalationDelayMinutes Int @default(5)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  team  Team           @relation(fields: [teamId], references: [id])
+  slots ScheduleSlot[]
+  
+  @@map("schedules")
+}
+
+model ScheduleSlot {
+  id         String   @id @default(uuid())
+  scheduleId String
+  engineerId String
+  role       String   // "primary", "secondary"
+  
+  // For weekly rotation
+  weekNumber Int?     // 1, 2, 3, etc (relative to schedule start)
+  
+  // For custom/specific dates
+  startTime  DateTime?
+  endTime    DateTime?
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  schedule Schedule @relation(fields: [scheduleId], references: [id])
+  engineer Engineer @relation(fields: [engineerId], references: [id])
+  
+  @@map("schedule_slots")
+}
+
+model OnCallHistory {
+  id          String   @id @default(uuid())
+  engineerId  String
+  scheduleId  String
+  role        String   // "primary", "secondary"
+  startedAt   DateTime
+  endedAt     DateTime?
+  
+  // For audit/metrics
+  incidentsHandled Int @default(0)
+  
+  @@map("oncall_history")
 }
