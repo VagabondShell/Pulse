@@ -13,10 +13,9 @@ export class AppService {
         service: dataLog.service,
         severity: dataLog.severity,
         message: dataLog.message,
-        labels: dataLog.labels || {}, // Handles optional JSON fields
+        labels: dataLog.labels || {},
       },
     });
-
     return newAlert;
   }
 }
