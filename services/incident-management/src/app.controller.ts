@@ -13,4 +13,9 @@ export class AppController {
   async getAllIncidents(@Query('status') status?: string) {
     return this.incidentsService.getIncidents(status);
   }
+  @Get()
+  //        <Route path="/incident/:id" element={<IncidentDetails />} />
+  async getIncident(@Query('id') id: string) {
+    return this.incidentsService.getIncident(id);
+  }
 }

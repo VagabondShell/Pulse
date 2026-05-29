@@ -100,7 +100,7 @@ export class IncidentsService {
         ...(statusFilter && { status: statusFilter }),
       },
       orderBy: {
-        createdAt: 'desc', // Newest alerts at the top!
+        createdAt: 'desc',
       },
     });
 
@@ -113,4 +113,5 @@ export class IncidentsService {
       assigneeName: incident.assigneeName || 'Unassigned',
     }));
   }
+  async getIncident(id: string);
 }
