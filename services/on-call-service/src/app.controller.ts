@@ -22,7 +22,4 @@ export class AppController {
     // Returns the entire array of slots for the next 4 weeks (For React Frontend)
     return this.onCallCalculatorService.getFullRotationForService(serviceName);
   }
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'UP', timestamp: new Date() });
-});
 }

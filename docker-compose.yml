@@ -26,6 +26,19 @@ services:
       - ./grafana/dashboards:/var/lib/grafana/dashboards
     networks:
         - pulse
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    container_name: prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - pulse
 volumes:
   db-data:
   grafana_data:
+  prometheus-data:
