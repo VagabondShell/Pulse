@@ -1,16 +1,24 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
 import { ProcessAlertDto } from './dto/process-alert.dto';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs'; // Helper to convert Observable to Promise
 
 @Injectable()
 export class IncidentsService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(IncidentsService.name);
+  constructor(
+    private prisma: PrismaService,
+    private readonly httpService: HttpService,
+  ) {}
+
   private readonly severityToPriority: Record<string, string> = {
     critical: 'high',
     warning: 'medium',
     low: 'low',
     info: 'low',
   };
+
   async processAlert(dataLog: ProcessAlertDto) {
     const fiveMinutesAgo = new Date();
     fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
@@ -31,8 +39,7 @@ export class IncidentsService {
     const existingIncident = await this.prisma.incident.findFirst({
       where: {
         status: 'open',
-        // Searching for the service name in the title
-        title: { contains: dataLog.service, mode: 'insensitive' },
+        service: dataLog.service,
         priority: targetPriority, // Using our mapped priority
         createdAt: { gte: fiveMinutesAgo },
       },
@@ -45,9 +52,10 @@ export class IncidentsService {
         data: { incidentId: existingIncident.id },
       });
     } else {
-      return await this.prisma.incident.create({
+      let incident = await this.prisma.incident.create({
         data: {
           title: `Issue in ${dataLog.service} (${dataLog.severity})`,
+          service: dataLog.service,
           priority: targetPriority, // Using the same mapped priority
           status: 'open',
           alerts: {
@@ -55,6 +63,36 @@ export class IncidentsService {
           },
         },
       });
+      try {
+        this.logger.log(
+          `📞 Calling On-Call Service for team: ${dataLog.service}...`,
+        );
+        const response = await firstValueFrom(
+          this.httpService.get(
+            `http://localhost:8003/api/v1/on-call/current?service=${dataLog.service}`,
+          ),
+        );
+        const onCallEngineer = response.data;
+        // Update the incident with the Snapshot Data
+        incident = await this.prisma.incident.update({
+          where: { id: incident.id },
+          data: {
+            assigneeId: onCallEngineer.assigneeId,
+            assigneeName: onCallEngineer.name,
+            assigneeEmail: onCallEngineer.email,
+          },
+        });
+        this.logger.log(
+          `✅ Successfully assigned Incident to: ${onCallEngineer.name}`,
+        );
+        return incident;
+      } catch (error) {
+        // If port 8003 is down, we don't crash. We just log the error.
+        this.logger.error(
+          `❌ Failed to assign engineer to incident: ${error.message}`,
+        );
+        return incident;
+      }
     }
   }
 }

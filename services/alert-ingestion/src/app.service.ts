@@ -16,8 +16,6 @@ export class AppService {
       const response = await firstValueFrom(
         this.httpService.post(url, dataLog),
       );
-
-      // 3. Return the data the Incident Service sends back
       return response.data;
     } catch (error) {
       console.error('Failed to contact Incident Service:', error.message);

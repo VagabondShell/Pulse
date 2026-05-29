@@ -29,6 +29,7 @@ model RawAlert {
 
 model Incident {
   id          String   @id @default(uuid())
+  service       String
   title       String
   description String?
   status      String   @default("open") // open, investigating, resolved, closed
@@ -36,6 +37,8 @@ model Incident {
   
   // THE FIX: Use an optional ID to reference the On-Call Service
   assigneeId  String?  
+  assigneeName  String?  // "Alice (Senior)"
+  assigneeEmail String?
 
   // Stats and tracking
   createdAt   DateTime @default(now())
