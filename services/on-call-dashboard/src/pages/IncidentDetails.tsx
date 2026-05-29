@@ -2,7 +2,24 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { fetchIncidentById } from '../api/incidentApi';
 import type { Incident } from './Dashboard'; 
-import './IncidentDetails.css'; // 👈 Import the new CSS!
+import './IncidentDetails.css'; 
+
+// 1. Helper function (Outside the component)
+const calculateTimeDiff = (startIso: string, endIso: string) => {
+  const start = new Date(startIso).getTime();
+  const end = new Date(endIso).getTime();
+  
+  const diffInMs = end - start;
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes}m`;
+  }
+  
+  const hours = Math.floor(diffInMinutes / 60);
+  const remainingMinutes = diffInMinutes % 60;
+  return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+};
 
 export default function IncidentDetails() {
   const { id } = useParams<{ id: string }>(); 
@@ -23,6 +40,16 @@ export default function IncidentDetails() {
   if (!incident) return <div className="details-container">Incident not found!</div>;
 
   const displayId = `INC-${incident.id.slice(0, 4).toUpperCase()}`;
+
+  // 👇 2. DEFINE THE VARIABLES HERE! (Inside the component, before the return) 👇
+  const mttaDisplay = incident.isAcknowledged && incident.acknowledgedAt
+    ? calculateTimeDiff(incident.createdAt, incident.acknowledgedAt)
+    : 'N/A';
+
+  const mttrDisplay = incident.isResolved && incident.resolvedAt
+    ? calculateTimeDiff(incident.createdAt, incident.resolvedAt)
+    : 'N/A';
+  // 👆 ---------------------------------------------------------------------- 👆
 
   return (
     <div className="details-container">
@@ -81,16 +108,20 @@ export default function IncidentDetails() {
               RESOLVE INCIDENT
             </button>
           </div>
-          
+
           {/* Metrics pushed to the right side */}
           <div style={{ textAlign: 'right' }}>
-            <div className="stat-block" style={{ flexDirection: 'row', alignItems: 'center', gap: '8px' }}>
+            <div className="stat-block" style={{ flexDirection: 'row', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
               <span className="stat-label">MTTA:</span>
-              <span className="stat-value" style={{ fontSize: '0.85rem' }}>N/A</span>
+              <span className="stat-value" style={{ fontSize: '0.85rem' }}>
+                {mttaDisplay} 
+              </span>
             </div>
-            <div className="stat-block" style={{ flexDirection: 'row', alignItems: 'center', gap: '8px' }}>
+            <div className="stat-block" style={{ flexDirection: 'row', alignItems: 'center', gap: '8px', justifyContent: 'flex-end', marginTop: '8px' }}>
               <span className="stat-label">MTTR:</span>
-              <span className="stat-value" style={{ fontSize: '0.85rem' }}>N/A</span>
+              <span className="stat-value" style={{ fontSize: '0.85rem' }}>
+                {mttrDisplay}
+              </span>
             </div>
           </div>
         </div>
