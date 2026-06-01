@@ -1,18 +1,22 @@
 name: CI Pipeline
 on: [push]
 jobs:
-  first-job:
+  quality-gate:
+    name: Alert Ingestion Checks
     runs-on: ubuntu-latest
     steps:
       - name: Get code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
       - name: Install nodejs
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
-          node-version: 26
+          node-version: 22
       - name: Install dependencies
         working-directory: ./services/alert-ingestion
         run: npm ci
-      - name: run tests
+      - name: Run linter
+        working-directory: ./services/alert-ingestion
+        run: npm run lint
+      - name: Run unit tests
         working-directory: ./services/alert-ingestion
         run: npm run test

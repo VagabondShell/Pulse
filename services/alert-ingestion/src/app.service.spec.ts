@@ -3,12 +3,12 @@ import { AppService } from './app.service';
 import { HttpService } from '@nestjs/axios';
 import { of, throwError } from 'rxjs';
 import { InternalServerErrorException } from '@nestjs/common';
-import { AxiosResponse, InternalAxiosErrorConfig } from 'axios';
+import { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
 describe('AppService', () => {
   let service: AppService;
-  let httpService: HttpService;
 
+  // We keep our mock strongly typed
   const mockHttpService = {
     post: jest.fn(),
   };
@@ -25,7 +25,11 @@ describe('AppService', () => {
     }).compile();
 
     service = module.get<AppService>(AppService);
-    httpService = module.get<HttpService>(HttpService);
+  });
+
+  // DevOps Best Practice: Clean up mocks after every single test
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -42,12 +46,14 @@ describe('AppService', () => {
 
     it('should successfully ingest an alert', async () => {
       const resultData = { id: 'incident-123' };
+
+      // Fixed Unsafe Assignment: Using InternalAxiosRequestConfig
       const response: AxiosResponse = {
         data: resultData,
         status: 201,
         statusText: 'Created',
         headers: {},
-        config: {} as InternalAxiosErrorConfig,
+        config: {} as InternalAxiosRequestConfig,
       };
 
       mockHttpService.post.mockReturnValue(of(response));
@@ -55,18 +61,22 @@ describe('AppService', () => {
       const result = await service.ingestAlert(createAlertDto);
 
       expect(result).toEqual(resultData);
-      expect(httpService.post).toHaveBeenCalledWith(
+
+      // Fixed Unbound Method: We check the mock function directly!
+      expect(mockHttpService.post).toHaveBeenCalledWith(
         'http://incident-management:8002/incidents',
         createAlertDto,
       );
     });
 
     it('should throw InternalServerErrorException when http call fails', async () => {
-      mockHttpService.post.mockReturnValue(throwError(() => new Error('Network Error')));
+      const networkError = new Error('Network Error');
+      mockHttpService.post.mockReturnValue(throwError(() => networkError));
 
-      await expect(service.ingestAlert(createAlertDto)).rejects.toThrow(
-        InternalServerErrorException,
-      );
+      // Fixed Unbound Method: Safely wrap the call in an arrow function
+      await expect(async () => {
+        await service.ingestAlert(createAlertDto);
+      }).rejects.toThrow(InternalServerErrorException);
     });
   });
 });
