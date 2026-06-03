@@ -27,6 +27,10 @@ jobs:
       - name: Install dependencies
         working-directory: services/${{ matrix.service }}
         run: npm ci
+      - name: Generate Prisma Client
+        working-directory: services/${{ matrix.service }}
+        run: npx prisma generate
+        continue-on-error: true
       - name: Run linter
         working-directory: services/${{ matrix.service }}
         run: npm run lint
