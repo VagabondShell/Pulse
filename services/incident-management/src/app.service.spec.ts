@@ -3,12 +3,10 @@ import { IncidentsService } from './app.service';
 import { PrismaService } from './prisma/prisma.service';
 import { HttpService } from '@nestjs/axios';
 import { of } from 'rxjs';
-import { AxiosResponse, InternalAxiosErrorConfig } from 'axios';
+import { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
 describe('IncidentsService', () => {
   let service: IncidentsService;
-  let prisma: PrismaService;
-  let httpService: HttpService;
 
   const mockPrismaService = {
     rawAlert: {
@@ -44,8 +42,6 @@ describe('IncidentsService', () => {
     }).compile();
 
     service = module.get<IncidentsService>(IncidentsService);
-    prisma = module.get<PrismaService>(PrismaService);
-    httpService = module.get<HttpService>(HttpService);
   });
 
   it('should be defined', () => {
@@ -69,31 +65,47 @@ describe('IncidentsService', () => {
 
     it('should create a new incident if no open incident exists', async () => {
       mockPrismaService.incident.findFirst.mockResolvedValue(null);
-      mockPrismaService.incident.create.mockResolvedValue({ id: 'inc-1', ...alertDto, priority: 'high' });
-      
+      mockPrismaService.incident.create.mockResolvedValue({
+        id: 'inc-1',
+        ...alertDto,
+        priority: 'high',
+      });
+
       const onCallResponse: AxiosResponse = {
-        data: { primary: { id: 'eng-1', name: 'John Doe', email: 'john@example.com' } },
+        data: {
+          primary: { id: 'eng-1', name: 'John Doe', email: 'john@example.com' },
+        },
         status: 200,
         statusText: 'OK',
         headers: {},
-        config: {} as InternalAxiosErrorConfig,
+        config: {} as InternalAxiosRequestConfig,
       };
       mockHttpService.get.mockReturnValue(of(onCallResponse));
-      mockPrismaService.incident.update.mockResolvedValue({ id: 'inc-1', assigneeName: 'John Doe' });
+      mockPrismaService.incident.update.mockResolvedValue({
+        id: 'inc-1',
+        assigneeName: 'John Doe',
+      });
 
-      const result = await service.processAlert(alertDto);
+      await service.processAlert(alertDto);
 
       expect(mockPrismaService.rawAlert.create).toHaveBeenCalled();
       expect(mockPrismaService.incident.findFirst).toHaveBeenCalled();
       expect(mockPrismaService.incident.create).toHaveBeenCalled();
-      expect(httpService.get).toHaveBeenCalled();
+      expect(mockHttpService.get).toHaveBeenCalled();
       expect(mockPrismaService.incident.update).toHaveBeenCalled();
     });
 
     it('should link to existing incident if one is open', async () => {
-      const existingIncident = { id: 'inc-existing', service: 'payment-gateway', status: 'open' };
+      const existingIncident = {
+        id: 'inc-existing',
+        service: 'payment-gateway',
+        status: 'open',
+      };
       mockPrismaService.incident.findFirst.mockResolvedValue(existingIncident);
-      mockPrismaService.rawAlert.update.mockResolvedValue({ ...mockRawAlert, incidentId: 'inc-existing' });
+      mockPrismaService.rawAlert.update.mockResolvedValue({
+        ...mockRawAlert,
+        incidentId: 'inc-existing',
+      });
 
       await service.processAlert(alertDto);
 

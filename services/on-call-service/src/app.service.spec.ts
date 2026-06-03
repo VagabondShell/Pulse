@@ -4,7 +4,6 @@ import { PrismaService } from './prisma/prisma.service';
 
 describe('OnCallCalculatorService', () => {
   let service: OnCallCalculatorService;
-  let prisma: PrismaService;
 
   const mockPrismaService = {
     service: {
@@ -27,7 +26,6 @@ describe('OnCallCalculatorService', () => {
     }).compile();
 
     service = module.get<OnCallCalculatorService>(OnCallCalculatorService);
-    prisma = module.get<PrismaService>(PrismaService);
   });
 
   it('should be defined', () => {
@@ -37,9 +35,9 @@ describe('OnCallCalculatorService', () => {
   describe('getCurrentOnCallForService', () => {
     it('should throw error if service is not found', async () => {
       mockPrismaService.service.findUnique.mockResolvedValue(null);
-      await expect(service.getCurrentOnCallForService('unknown')).rejects.toThrow(
-        "Service 'unknown' not found",
-      );
+      await expect(
+        service.getCurrentOnCallForService('unknown'),
+      ).rejects.toThrow("Service 'unknown' not found");
     });
 
     it('should return on-call info for a valid service', async () => {
@@ -55,12 +53,22 @@ describe('OnCallCalculatorService', () => {
           {
             weekNumber: 1,
             role: 'primary',
-            engineer: { id: 'e1', name: 'Eng 1', email: 'e1@ex.com', phone: '123' },
+            engineer: {
+              id: 'e1',
+              name: 'Eng 1',
+              email: 'e1@ex.com',
+              phone: '123',
+            },
           },
           {
             weekNumber: 2,
             role: 'primary',
-            engineer: { id: 'e2', name: 'Eng 2', email: 'e2@ex.com', phone: '456' },
+            engineer: {
+              id: 'e2',
+              name: 'Eng 2',
+              email: 'e2@ex.com',
+              phone: '456',
+            },
           },
         ],
       };
