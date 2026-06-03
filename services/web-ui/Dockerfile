@@ -9,24 +9,17 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Production
-FROM node:22-alpine
+FROM nginx:1.31-alpine AS production
 
 WORKDIR /usr/src/app
 
-# Set production environment
-ENV NODE_ENV=production
-
-# Copy package files to install production dependencies
-COPY package*.json ./
-
-# Install only production dependencies
-RUN npm ci --omit=dev
+RUN rm -rf /usr/share/nginx/html/*
 
 # Copy the compiled application from the builder stage
-COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder /usr/src/app/dist /usr/share/nginx/html
 
-HEALTHCHECK --interval=30s --timeout=3s \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8001/health || exit 1
+COPY ./conf/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Start the application
-CMD ["node", "dist/main"]
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

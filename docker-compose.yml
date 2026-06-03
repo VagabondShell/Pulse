@@ -84,6 +84,14 @@ services:
         condition: service_healthy
       incident-management:
         condition: service_started
+  web-ui:
+    build: ./services/web-ui
+    container_name: web-ui
+    ports:
+      - "300:80"
+    networks:
+      - pulse
+
 
 volumes:
   db-data:
