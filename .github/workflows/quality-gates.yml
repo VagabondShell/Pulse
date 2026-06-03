@@ -1,8 +1,9 @@
 name: Quality Gates
 on:
-  pull_request:
+  push:
     branches:
-      - main
+      # - main
+      - feat/docker-build
 jobs:
   quality:
     name: Lint & Test
