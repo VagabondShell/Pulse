@@ -13,7 +13,7 @@ jobs:
         service:
           - alert-ingestion
           - incident-management
-          - oncall-service
+          - on-call-service
           - web-ui
     steps:
       - name: Get code
