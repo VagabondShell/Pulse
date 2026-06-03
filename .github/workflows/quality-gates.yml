@@ -1,9 +1,19 @@
-name: CI Pipeline
-on: [push]
+name: Quality Gates
+on:
+  pull_request:
+    branches:
+      - main
 jobs:
-  quality-gate:
-    name: Alert Ingestion Checks
+  quality:
+    name: Lint & Test
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - alert-ingestion
+          - incident-management
+          - oncall-service
+          - web-ui
     steps:
       - name: Get code
         uses: actions/checkout@v4
@@ -11,12 +21,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: 'npm'
+          cache-dependency-path: services/${{ matrix.service }}/package-lock.json
       - name: Install dependencies
-        working-directory: ./services/alert-ingestion
+        working-directory: services/${{ matrix.service }}
         run: npm ci
       - name: Run linter
-        working-directory: ./services/alert-ingestion
-        run: npm run lint
+        working-directory: services/${{ matrix.service }}
+         run: npm run lint
       - name: Run unit tests
-        working-directory: ./services/alert-ingestion
-        run: npm run test
+        working-directory: services/${{ matrix.service }}
+         run: npm run test
+      - name: Verify Docker build (no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: services/${{ matrix.service }}
+          push: false  # Just verify it builds, don't push
+          tags: pulse/${{ matrix.service }}:pr-test
