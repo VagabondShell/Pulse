@@ -29,10 +29,10 @@ jobs:
         run: npm ci
       - name: Run linter
         working-directory: services/${{ matrix.service }}
-         run: npm run lint
+        run: npm run lint
       - name: Run unit tests
         working-directory: services/${{ matrix.service }}
-         run: npm run test
+        run: npm run test
       - name: Verify Docker build (no push)
         uses: docker/build-push-action@v5
         with:
