@@ -8,9 +8,9 @@ COPY --chown=node:node . .
 RUN npx prisma generate
 RUN npm run build
 
-# Stage 2: Production
 FROM node:26-alpine
-RUN apk update && apk upgrade --no-cache && apk add --no-cache openssl libc6-compat
+
+RUN apk update && apk upgrade --no-cache # cache-bust-01
 
 WORKDIR /usr/src/app
 
