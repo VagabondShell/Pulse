@@ -1,4 +1,4 @@
-FROM node:22-alpine AS builder
+FROM node:26-alpine AS builder
 WORKDIR /usr/src/app
 COPY --chown=node:node package*.json ./
 
@@ -9,7 +9,7 @@ COPY --chown=node:node . .
 RUN npm run build
 
 # Stage 2: Production
-FROM node:22-alpine
+FROM node:26-alpine
 
 RUN apk update && apk upgrade --no-cache # cache-bust-01
 
