@@ -30,10 +30,10 @@ jobs:
     - name: Scan source code with Trivy
       uses: aquasecurity/trivy-action@master
       with:
-        scan-type: 'fs'                    # fs = filesystem scan
+        scan-type: 'fs'
         scan-ref: 'services/${{ matrix.service }}'
         severity: 'CRITICAL,HIGH'
-        exit-code: '1'                     # exit 1 = fail the pipeline
+        exit-code: '1'
         format: 'table'
 
     - name: Build Docker image locally
@@ -49,23 +49,19 @@ jobs:
     - name: Scan Docker image with Trivy
       uses: aquasecurity/trivy-action@master
       with:
-        scan-type: 'image'                         # scan Docker image
+        scan-type: 'image'
         image-ref: services/${{ matrix.service }}:${{ github.sha }}
-        format: 'sarif'                      # ← Changed from 'table' to 'sarif'
-        output: 'trivy-results.sarif'
+        format: 'table'
         severity: 'CRITICAL,HIGH'
-        exit-code: '1'                             # fail if found
-        ignore-unfixed: true                       # ignore vulns with no fix yet
+        exit-code: '1'
+        ignore-unfixed: true
 
-    - name: Push Docker image
-      uses: docker/build-push-action@v5
+    - name: Login to DockerHub
+      uses: docker/login-action@v3
       with:
-        context: services/${{ matrix.service }}
-        push: true
-        tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/pulse-${{ matrix.service }}:${{ github.sha }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/pulse-${{ matrix.service }}:latest
-        cache-from: type=gha,scope=${{ matrix.service }}
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
     - name: Push Docker image
       uses: docker/build-push-action@v5
       with:
