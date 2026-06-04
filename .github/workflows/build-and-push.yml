@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - feat/ci-build-push
+permissions:
+  contents: read
+  security-events: write
+  actions: read
 
 jobs:
   Build-Push:
