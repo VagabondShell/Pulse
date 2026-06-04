@@ -11,7 +11,7 @@ RUN npm run build
 
 # Stage 2: Production
 FROM node:26-alpine
-RUN apk update && apk upgrade --no-cache
+RUN apk update && apk upgrade --no-cache && apk add --no-cache openssl libc6-compat
 
 WORKDIR /usr/src/app
 
@@ -23,7 +23,7 @@ COPY --chown=node:node  package*.json ./
 COPY --chown=node:node  prisma ./prisma/
 
 # Install only production dependencies
-RUN npm ci --omit=dev
+RUN npm install -g npm@latest && npm ci --omit=dev
 RUN npx prisma generate
 
 # Copy the compiled application from the builder stage

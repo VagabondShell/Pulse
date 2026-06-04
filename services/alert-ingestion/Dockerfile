@@ -22,7 +22,7 @@ ENV NODE_ENV=production
 COPY --chown=node:node package*.json ./
 
 # Install only production dependencies
-RUN npm ci --omit=dev
+RUN npm install -g npm@latest && npm ci --omit=dev
 
 # Copy the compiled application from the builder stage
 COPY --chown=node:node --from=builder /usr/src/app/dist ./dist
