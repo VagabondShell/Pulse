@@ -10,7 +10,8 @@ RUN npm run build
 
 # Stage 2: Production
 FROM node:22-alpine
-RUN apk update && apk upgrade --no-cache
+
+RUN apk update && apk upgrade --no-cache # cache-bust-01
 
 WORKDIR /usr/src/app
 
