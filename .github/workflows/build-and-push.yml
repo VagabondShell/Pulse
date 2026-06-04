@@ -1,8 +1,9 @@
-name: Build & Push
+name: Build, Scan and Push
 on:
   push:        
     branches:
-      - main
+      - ci-build-push
+
 jobs:
   Build & Push:
     runs-on: ubuntu-latest
@@ -14,13 +15,62 @@ jobs:
           - incident-management
           - on-call-service
           - web-ui
+
     steps:
     - name: Get code
-        uses: actions/checkout@v4
+      uses: actions/checkout@v4
+
     - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          install: true
-          driver: docker-container
-          use: true
+      uses: docker/setup-buildx-action@v3
+
+    - name: Scan source code with Trivy
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'                    # fs = filesystem scan
+        scan-ref: 'services/${{ matrix.service }}'
+        severity: 'CRITICAL,HIGH'          # only fail on critical/high
+        exit-code: '1'                     # exit 1 = fail the pipeline
+        format: 'table'
+
+    - name: Build Docker image locally
+      uses: docker/build-push-action@v5
+      with:
+        context: services/${{ matrix.service }}
+        push: false
+        load: true
+        tags: services/${{ matrix.service }}:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max, scope=${{ matrix.service }}
+
+    - name: Scan Docker image with Trivy
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'image'                         # scan Docker image
+        image-ref: services/${{ matrix.service }}:${{ github.sha }}
+        format: 'sarif'                      # ← Changed from 'table' to 'sarif'
+        output: 'trivy-results.sarif'
+        severity: 'CRITICAL,HIGH'
+        exit-code: '1'                             # fail if found
+        ignore-unfixed: true                       # ignore vulns with no fix yet
+
+    - name: Upload scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
     - name: Login to DockerHub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: services/${{ matrix.service }}
+        push: true
+        tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/pulse-${{ matrix.service }}:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/pulse-${{ matrix.service }}:latest
+        cache-from: type=gha, scope=${{ matrix.service }}
