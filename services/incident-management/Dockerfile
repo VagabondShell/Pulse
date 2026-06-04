@@ -10,7 +10,6 @@ RUN npm run build
 
 FROM node:26-alpine
 
-RUN apk update && apk upgrade --no-cache # cache-bust-01
 
 WORKDIR /usr/src/app
 
