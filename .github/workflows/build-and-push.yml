@@ -1,0 +1,26 @@
+name: Build & Push
+on:
+  push:        
+    branches:
+      - main
+jobs:
+  Build & Push:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - alert-ingestion
+          - incident-management
+          - on-call-service
+          - web-ui
+    steps:
+    - name: Get code
+        uses: actions/checkout@v4
+    - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+          driver: docker-container
+          use: true
+    - name: Login to DockerHub
