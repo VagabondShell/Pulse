@@ -1,9 +1,8 @@
 name: Quality Gates
 on:
-  push:
+  pull_request:        
     branches:
-      # - main
-      - feat/ci-matrix
+      - main
 jobs:
   quality:
     name: Lint & Test
@@ -12,24 +11,19 @@ jobs:
       fail-fast: false
       matrix:
         service:
-          - "alert-ingestion"
-          - "incident-management"
-          - "on-call-service"
-          - "web-ui"
+          - alert-ingestion
+          - incident-management
+          - on-call-service
+          - web-ui
     steps:
       - name: Get code
         uses: actions/checkout@v4
-      - name: Debug - List files
-        run: |
-          echo "Current directory: $(pwd)"
-          echo "Looking for: services/${{ matrix.service }}/package-lock.json"
-          ls -l services/${{ matrix.service }}/package-lock.json || echo "File not found!"
       - name: Install nodejs
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'npm'
-          cache-dependency-path: "services/${{ matrix.service }}/package-lock.json"
+          cache-dependency-path: services/${{ matrix.service }}/package-lock.json
       - name: Install dependencies
         working-directory: services/${{ matrix.service }}
         run: npm ci
@@ -47,5 +41,5 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: services/${{ matrix.service }}
-          push: false  # Just verify it builds, don't push
+          push: false  
           tags: pulse/${{ matrix.service }}:pr-test
