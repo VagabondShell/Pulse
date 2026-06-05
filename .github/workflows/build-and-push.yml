@@ -45,7 +45,7 @@ jobs:
         ignore-unfixed: true
 
     - name: Upload Trivy FS scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@v4
       if: always()
       with:
         sarif_file: 'trivy-fs-${{ matrix.service }}.sarif'
@@ -73,7 +73,7 @@ jobs:
         ignore-unfixed: true
 
     - name: Upload Trivy Image scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@v4
       if: always()
       with:
         sarif_file: 'trivy-image-${{ matrix.service }}.sarif'
