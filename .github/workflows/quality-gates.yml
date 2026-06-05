@@ -69,6 +69,13 @@ jobs:
         working-directory: services/${{ matrix.service }}
         run: npm ci
 
+      - name: Generate Prisma Client
+        if: matrix.service == 'incident-management' || matrix.service == 'on-call-service'
+        working-directory: services/${{ matrix.service }}
+        run: npx prisma generate
+        env:
+          DATABASE_URL: "postgresql://dummy:password@localhost:5432/dummy"
+
       - name: Run linter
         working-directory: services/${{ matrix.service }}
         run: npm run lint
