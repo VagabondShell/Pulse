@@ -1,8 +1,5 @@
 name: Quality Gates
 on:
-  push:
-    branches-ignore:
-      - main
   pull_request:
     branches:
       - main
@@ -71,10 +68,6 @@ jobs:
       - name: Install dependencies
         working-directory: services/${{ matrix.service }}
         run: npm ci
-
-      - name: Generate Prisma Client
-        if: matrix.service != 'alert-ingestion' && matrix.service != 'web-ui'
-        working-directory: services/${{ matrix.service }}
 
       - name: Run linter
         working-directory: services/${{ matrix.service }}
