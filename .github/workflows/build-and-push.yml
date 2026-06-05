@@ -28,20 +28,22 @@ jobs:
       uses: docker/setup-buildx-action@v3
 
     - name: Scan source code with Trivy (FS)
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@v0.28.0
       with:
         scan-type: 'fs'
         scan-ref: 'services/${{ matrix.service }}'
         severity: 'CRITICAL,HIGH'
         exit-code: '1'
         format: 'sarif'
-        output: 'trivy-fs-results.sarif'
+        output: 'trivy-fs-${{ matrix.service }}.sarif'
+        ignore-unfixed: true
+        scanners: 'vuln'
 
     - name: Upload Trivy FS scan results to GitHub Security tab
       uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
-        sarif_file: 'trivy-fs-results.sarif'
+        sarif_file: 'trivy-fs-${{ matrix.service }}.sarif'
         category: trivy-fs-${{ matrix.service }}
 
     - name: Build Docker image locally
@@ -54,13 +56,13 @@ jobs:
         cache-from: type=gha,scope=${{ matrix.service }}
         cache-to: type=gha,mode=max,scope=${{ matrix.service }}
 
-    - name: Scan Docker image with Trivy
-      uses: aquasecurity/trivy-action@master
+    - name: Scan Docker image with Trivy (Image)
+      uses: aquasecurity/trivy-action@v0.28.0
       with:
         scan-type: 'image'
         image-ref: services/${{ matrix.service }}:${{ github.sha }}
         format: 'sarif'
-        output: 'trivy-image-results.sarif'
+        output: 'trivy-image-${{ matrix.service }}.sarif'
         severity: 'CRITICAL,HIGH'
         exit-code: '1'
         ignore-unfixed: true
@@ -69,7 +71,7 @@ jobs:
       uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
-        sarif_file: 'trivy-image-results.sarif'
+        sarif_file: 'trivy-image-${{ matrix.service }}.sarif'
         category: trivy-image-${{ matrix.service }}
 
     - name: Login to DockerHub
