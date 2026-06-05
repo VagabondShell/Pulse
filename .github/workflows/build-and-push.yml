@@ -9,6 +9,25 @@ permissions:
   actions: read
 
 jobs:
+  # ==========================================
+  # JOB 1: Secret Scanning (Runs ONCE for the whole repo)
+  # ==========================================
+  Secret-Scanning:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get code (Deep Clone for GitLeaks)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # GitLeaks needs full history!
+
+      - name: Scan for secrets with GitLeaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ==========================================
+  # JOB 2: Build, Scan & Push (Runs 4x via Matrix)
+  # ==========================================
   Build-Push:
     runs-on: ubuntu-latest
     strategy:
@@ -23,33 +42,22 @@ jobs:
     steps:
     - name: Get code
       uses: actions/checkout@v4
+    - name: Scan for secrets with GitLeaks
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Install Trivy
-      uses: aquasecurity/setup-trivy@e07451d2e059ed86c2870430ea286b3a9e0bf241
-      with:
-        cache: true
-        version: v0.71.0
-
-    - name: Scan source code with Trivy (FS)
+    - name: Scan source code with Trivy
       uses: aquasecurity/trivy-action@master
       with:
-        scan-type: 'fs'
+        scan-type: 'fs'                    # fs = filesystem scan
         scan-ref: 'services/${{ matrix.service }}'
         severity: 'CRITICAL,HIGH'
-        exit-code: '1'
-        format: 'sarif'
-        output: 'trivy-fs-${{ matrix.service }}.sarif'
-        ignore-unfixed: true
-
-    - name: Upload Trivy FS scan results to GitHub Security tab
-      if: always()
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: trivy-fs-${{ matrix.service }}.sarif
-        category: trivy-fs-${{ matrix.service }}
+        exit-code: '1'                     # exit 1 = fail the pipeline
+        format: 'table'
 
     - name: Build Docker image locally
       uses: docker/build-push-action@v5
@@ -61,23 +69,22 @@ jobs:
         cache-from: type=gha,scope=${{ matrix.service }}
         cache-to: type=gha,mode=max,scope=${{ matrix.service }}
 
-    - name: Scan Docker image with Trivy (Image)
+    - name: Scan Docker image with Trivy
       uses: aquasecurity/trivy-action@master
       with:
-        scan-type: 'image'
+        scan-type: 'image'                         # scan Docker image
         image-ref: services/${{ matrix.service }}:${{ github.sha }}
-        format: 'sarif'
-        output: 'trivy-image-${{ matrix.service }}.sarif'
+        format: 'sarif'                      # ← Changed from 'table' to 'sarif'
+        output: 'trivy-results.sarif'
         severity: 'CRITICAL,HIGH'
-        exit-code: '1'
-        ignore-unfixed: true
+        exit-code: '1'                             # fail if found
+        ignore-unfixed: true                       # ignore vulns with no fix yet
 
-    - name: Upload Trivy Image scan results to GitHub Security tab
-      if: always()
+    - name: Upload scan results to GitHub Security tab
       uses: github/codeql-action/upload-sarif@v3
+      if: always()
       with:
-        sarif_file: trivy-image-${{ matrix.service }}.sarif
-        category: trivy-image-${{ matrix.service }}
+        sarif_file: 'trivy-results.sarif'
 
     - name: Login to DockerHub
       uses: docker/login-action@v3
