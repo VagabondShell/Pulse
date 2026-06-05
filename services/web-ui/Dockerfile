@@ -10,6 +10,7 @@ RUN npm run build
 
 # Stage 2: Production
 FROM nginx:1.31-alpine AS production
+RUN apk update && apk upgrade --no-cache
 
 WORKDIR /usr/src/app
 

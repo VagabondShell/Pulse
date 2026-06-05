@@ -1,45 +1,93 @@
 name: Quality Gates
 on:
-  pull_request:        
+  pull_request:
     branches:
       - main
+
 jobs:
+  # ==========================================
+  # JOB 1: Secret Scanning
+  # ==========================================
+  Secret-Scanning:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get code (Deep Clone for GitLeaks)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for secrets with GitLeaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ==========================================
+  # JOB 2: Detect Which Services Changed
+  # ==========================================
+  Detect-Changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.filter.outputs.changes }}
+    steps:
+      - name: Get code
+        uses: actions/checkout@v4
+
+      - name: Check for modified files
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            alert-ingestion: 'services/alert-ingestion/**'
+            incident-management: 'services/incident-management/**'
+            on-call-service: 'services/on-call-service/**'
+            web-ui: 'services/web-ui/**'
+
+  # ==========================================
+  # JOB 3: Lint & Test
+  # ==========================================
   quality:
+    needs: [Secret-Scanning, Detect-Changes]
+    if: ${{ needs.Detect-Changes.outputs.services != '[]' && needs.Detect-Changes.outputs.services != '' }}
     name: Lint & Test
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        service:
-          - alert-ingestion
-          - incident-management
-          - on-call-service
-          - web-ui
+        service: ${{ fromJSON(needs.Detect-Changes.outputs.services) }}
     steps:
       - name: Get code
         uses: actions/checkout@v4
+
       - name: Install nodejs
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 26
           cache: 'npm'
           cache-dependency-path: services/${{ matrix.service }}/package-lock.json
+
       - name: Install dependencies
         working-directory: services/${{ matrix.service }}
         run: npm ci
+
       - name: Generate Prisma Client
+        if: matrix.service == 'incident-management' || matrix.service == 'on-call-service'
         working-directory: services/${{ matrix.service }}
         run: npx prisma generate
-        continue-on-error: true
+        env:
+          DATABASE_URL: "postgresql://dummy:password@localhost:5432/dummy"
+
       - name: Run linter
         working-directory: services/${{ matrix.service }}
         run: npm run lint
+
       - name: Run unit tests
         working-directory: services/${{ matrix.service }}
         run: npm run test
+
       - name: Verify Docker build (no push)
         uses: docker/build-push-action@v5
         with:
           context: services/${{ matrix.service }}
           push: false  
           tags: pulse/${{ matrix.service }}:pr-test
+          cache-from: type=gha,scope=${{ matrix.service }}-test
