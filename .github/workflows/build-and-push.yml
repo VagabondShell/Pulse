@@ -9,17 +9,37 @@ permissions:
   actions: read
 
 jobs:
+  # ==========================================
+  # JOB 1: Detect Which Services Changed
+  # ==========================================
+  Detect-Changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.filter.outputs.changes }}
+    steps:
+      - name: Get code
+        uses: actions/checkout@v4
+
+      - name: Check for modified files
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            alert-ingestion: 'services/alert-ingestion/**'
+            incident-management: 'services/incident-management/**'
+            on-call-service: 'services/on-call-service/**'
+            web-ui: 'services/web-ui/**'
+
+  # ==========================================
+  # JOB 2: Build ,Scan  
+  # ==========================================
   Build-Push:
+    needs: [Detect-Changes]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        service:
-          - alert-ingestion
-          - incident-management
-          - on-call-service
-          - web-ui
-
+        service: ${{ fromJSON(needs.Detect-Changes.outputs.services) }}
     steps:
     - name: Get code
       uses: actions/checkout@v4

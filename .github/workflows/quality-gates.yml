@@ -22,20 +22,38 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ==========================================
-  # JOB 2: Lint, Test (Runs 4x via Matrix)
+    # JOB 2: Detect Which Services Changed
+    # ==========================================
+    Detect-Changes:
+      runs-on: ubuntu-latest
+      outputs:
+        services: ${{ steps.filter.outputs.changes }}
+      steps:
+        - name: Get code
+          uses: actions/checkout@v4
+
+        - name: Check for modified files
+          id: filter
+          uses: dorny/paths-filter@v3
+          with:
+            filters: |
+              alert-ingestion: 'services/alert-ingestion/**'
+              incident-management: 'services/incident-management/**'
+              on-call-service: 'services/on-call-service/**'
+              web-ui: 'services/web-ui/**'
+
+  # ==========================================
+  # JOB 3: Lint, Test (Runs 4x via Matrix)
   # ==========================================
   quality:
-    needs: Secret-Scanning
+    needs: [Secret-Scanning, Detect-Changes]
+    if: ${{ needs.Detect-Changes.outputs.services != '[]' && needs.Detect-Changes.outputs.services != '' }}
     name: Lint & Test
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        service:
-          - alert-ingestion
-          - incident-management
-          - on-call-service
-          - web-ui
+        service: ${{ fromJSON(needs.Detect-Changes.outputs.services) }}
     steps:
       - name: Get code
         uses: actions/checkout@v4
