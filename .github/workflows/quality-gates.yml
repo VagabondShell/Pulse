@@ -4,7 +4,28 @@ on:
     branches:
       - main
 jobs:
+
+  # ==========================================
+  # JOB 1: Secret Scanning (Runs ONCE for the whole repo)
+  # ==========================================
+  Secret-Scanning:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get code (Deep Clone for GitLeaks)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # GitLeaks needs full history!
+
+      - name: Scan for secrets with GitLeaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ==========================================
+  # JOB 2: Lint, Test (Runs 4x via Matrix)
+  # ==========================================
   quality:
+    needs: Secret-Scanning
     name: Lint & Test
     runs-on: ubuntu-latest
     strategy:
