@@ -1,12 +1,15 @@
 name: Quality Gates
 on:
+  push:
+    branches-ignore:
+      - main
   pull_request:
     branches:
       - main
-jobs:
 
+jobs:
   # ==========================================
-  # JOB 1: Secret Scanning (Runs ONCE for the whole repo)
+  # JOB 1: Secret Scanning
   # ==========================================
   Secret-Scanning:
     runs-on: ubuntu-latest
@@ -14,7 +17,7 @@ jobs:
       - name: Get code (Deep Clone for GitLeaks)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # GitLeaks needs full history!
+          fetch-depth: 0
 
       - name: Scan for secrets with GitLeaks
         uses: gitleaks/gitleaks-action@v2
@@ -43,7 +46,7 @@ jobs:
             web-ui: 'services/web-ui/**'
 
   # ==========================================
-  # JOB 3: Lint, Test (Runs 4x via Matrix)
+  # JOB 3: Lint & Test
   # ==========================================
   quality:
     needs: [Secret-Scanning, Detect-Changes]
@@ -57,28 +60,34 @@ jobs:
     steps:
       - name: Get code
         uses: actions/checkout@v4
+
       - name: Install nodejs
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 26
           cache: 'npm'
           cache-dependency-path: services/${{ matrix.service }}/package-lock.json
+
       - name: Install dependencies
         working-directory: services/${{ matrix.service }}
         run: npm ci
+
       - name: Generate Prisma Client
+        if: matrix.service != 'alert-ingestion' && matrix.service != 'web-ui'
         working-directory: services/${{ matrix.service }}
-        run: npx prisma generate
-        continue-on-error: true
+
       - name: Run linter
         working-directory: services/${{ matrix.service }}
         run: npm run lint
+
       - name: Run unit tests
         working-directory: services/${{ matrix.service }}
         run: npm run test
+
       - name: Verify Docker build (no push)
         uses: docker/build-push-action@v5
         with:
           context: services/${{ matrix.service }}
           push: false  
           tags: pulse/${{ matrix.service }}:pr-test
+          cache-from: type=gha,scope=${{ matrix.service }}-test
