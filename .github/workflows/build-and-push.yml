@@ -45,10 +45,10 @@ jobs:
         ignore-unfixed: true
 
     - name: Upload Trivy FS scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v4
       if: always()
+      uses: github/codeql-action/upload-sarif@v3
       with:
-        sarif_file: 'trivy-fs-${{ matrix.service }}.sarif'
+        sarif_file: trivy-fs-${{ matrix.service }}.sarif
         category: trivy-fs-${{ matrix.service }}
 
     - name: Build Docker image locally
@@ -73,10 +73,10 @@ jobs:
         ignore-unfixed: true
 
     - name: Upload Trivy Image scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v4
       if: always()
+      uses: github/codeql-action/upload-sarif@v3
       with:
-        sarif_file: 'trivy-image-${{ matrix.service }}.sarif'
+        sarif_file: trivy-image-${{ matrix.service }}.sarif
         category: trivy-image-${{ matrix.service }}
 
     - name: Login to DockerHub
